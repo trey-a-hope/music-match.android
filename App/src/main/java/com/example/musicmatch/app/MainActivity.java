@@ -1,6 +1,16 @@
 package com.example.musicmatch.app;
 
+import Adapters.SongListAdapter;
+import DTO.Song;
+import Listeners.RecyclerItemClickListener;
+import Miscellaneous.DividerDecoration;
 import Navigation.AppNavigator;
+import Services.MediaService;
+import Services.ModalService;
+import android.app.Activity;
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.net.Uri;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -8,10 +18,15 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.*;
 import android.widget.TextView;
+import android.provider.MediaStore;
+import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private ActionBarDrawerToggle drawerToggle;
@@ -21,6 +36,9 @@ public class MainActivity extends AppCompatActivity {
     private AppNavigator appNavigator;
     private TextView tvHeader;
     private ActionBar actionBar;
+    private MediaService _mediaService;
+    private RecyclerView songListRecylcerView;
+    private SongListAdapter songItemAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +47,40 @@ public class MainActivity extends AppCompatActivity {
         initUI();
         initObjects();
         setValues();
+        initRecyclerView();
+//        ArrayList<Song> songs = _mediaService.getSongsFromDevice();
+//        Song song = songs.get(0);
+//        ModalService.displayNotification(song.title, song.artist, this);
+    }
+
+    private class SongItemAdapter extends SongListAdapter<SongListAdapter.SongViewHolder> {
+
+        @Override
+        public SongListAdapter.SongViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.song_item_view, parent, false);
+            return new SongViewHolder(view) {
+            };
+        }
+
+        @Override
+        public void onBindViewHolder(SongViewHolder songViewHolder, int position) {
+            Song song = songItemAdapter.getItem(position);
+            if (songViewHolder instanceof SongViewHolder) {
+                songViewHolder.name.setText(song.title);
+                songViewHolder.artist.setText(song.artist);
+                songViewHolder.dateModified.setText(song.dateModified);
+            }
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return super.getItemViewType(position);
+        }
     }
 
     private void initUI() {
@@ -37,24 +89,55 @@ public class MainActivity extends AppCompatActivity {
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         navigationView = (NavigationView) findViewById(R.id.nvView);
         tvHeader = (TextView) findViewById(R.id.headerTV);
+        songListRecylcerView = (RecyclerView) findViewById(R.id.rv);
     }
 
-    private void initObjects(){
+    private void initObjects() {
         appNavigator = new AppNavigator(this, getApplicationContext());
         toolbar.setBackgroundColor(getResources().getColor(R.color.Red900));
         setSupportActionBar(toolbar);
         setTitle("Music Match");
         actionBar = getSupportActionBar();
         drawerToggle = setupDrawerToggle();
+        _mediaService = new MediaService(this);
+        songItemAdapter = new SongItemAdapter();
     }
 
-    private void setValues(){
+    private void setValues() {
         actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);
         actionBar.setDisplayHomeAsUpEnabled(true);
         drawerLayout.setDrawerListener(drawerToggle);
         tvHeader.setText("Trey's Profile");
         navigationView.setBackgroundColor(getResources().getColor(R.color.Indigo50));
         setupDrawerContent(navigationView);
+    }
+
+    private void initRecyclerView() {
+        // Set adapter populated with example dummy data
+        songItemAdapter.addAll(_mediaService.getSongsFromDevice());
+        songListRecylcerView.setAdapter(songItemAdapter);
+
+        // Set layout manager
+        final LinearLayoutManager layoutManager = new LinearLayoutManager(songListRecylcerView.getContext());
+        songListRecylcerView.setLayoutManager(layoutManager);
+
+        // Add decoration for dividers between list items
+        songListRecylcerView.addItemDecoration(new DividerDecoration(MainActivity.this));
+
+        songListRecylcerView.addOnItemTouchListener(new RecyclerItemClickListener(this, new RecyclerItemClickListener.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                Song song = songItemAdapter.getItem(position);
+                ModalService.displayNotification(song.title, song.artist, MainActivity.this);
+            }
+        }));
+
+        songItemAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                //headersDecor.invalidateHeaders();
+            }
+        });
     }
 
     @Override
