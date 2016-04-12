@@ -8,8 +8,9 @@ import Navigation.AppNavigator;
 import Services.MediaService;
 import Services.ModalService;
 import android.app.Activity;
-import android.content.ContentResolver;
+import android.content.*;
 import android.database.Cursor;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -21,9 +22,11 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.*;
 import android.widget.TextView;
 import android.provider.MediaStore;
+import android.widget.Toast;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 
 import java.util.ArrayList;
@@ -48,9 +51,8 @@ public class MainActivity extends AppCompatActivity {
         initObjects();
         setValues();
         initRecyclerView();
-//        ArrayList<Song> songs = _mediaService.getSongsFromDevice();
-//        Song song = songs.get(0);
-//        ModalService.displayNotification(song.title, song.artist, this);
+
+
     }
 
     private class SongItemAdapter extends SongListAdapter<SongListAdapter.SongViewHolder> {
